@@ -1,0 +1,6 @@
+{
+  "name": "QueueCare AI",
+  "description": "Healthcare, Without the Wait. Smart patient queue management system with real-time token tracking, intelligent waiting-time estimation, and hospital staff triage controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

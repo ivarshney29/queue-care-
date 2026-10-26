@@ -1,0 +1,112 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role authentication (patient, staff, admin)",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "enum": ["patient", "staff", "admin"], "maxLength": 20 },
+        "department": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["uid", "name", "email", "role", "createdAt"]
+    },
+    "PatientToken": {
+      "title": "PatientToken",
+      "description": "Queue token record for hospital department",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string", "maxLength": 128 },
+        "ownerUid": { "type": "string", "maxLength": 128 },
+        "patientName": { "type": "string", "maxLength": 100 },
+        "age": { "type": "number" },
+        "tokenNumber": { "type": "string", "maxLength": 20 },
+        "department": { "type": "string", "maxLength": 50 },
+        "appointmentType": { "type": "string", "maxLength": 50 },
+        "arrivalTime": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["waiting", "called", "in-consultation", "completed", "cancelled"], "maxLength": 30 },
+        "priority": { "type": "string", "enum": ["routine", "moderate", "urgent"], "maxLength": 20 },
+        "urgencyNotes": { "type": "string", "maxLength": 500 },
+        "estimatedWaitingMinutes": { "type": "number" },
+        "calledAt": { "type": "string", "maxLength": 50 },
+        "consultationStartTime": { "type": "string", "maxLength": 50 },
+        "completionTime": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "maxLength": 50 },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["patientId", "ownerUid", "patientName", "tokenNumber", "department", "status", "priority", "createdAt"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "Hospital department configuration and queue metrics",
+      "type": "object",
+      "properties": {
+        "departmentId": { "type": "string", "maxLength": 50 },
+        "name": { "type": "string", "maxLength": 100 },
+        "code": { "type": "string", "maxLength": 10 },
+        "serviceCapacity": { "type": "number" },
+        "averageServiceMinutes": { "type": "number" },
+        "activeStaffCount": { "type": "number" },
+        "color": { "type": "string", "maxLength": 30 }
+      },
+      "required": ["departmentId", "name", "averageServiceMinutes", "activeStaffCount"]
+    },
+    "QueueRuleConfig": {
+      "title": "QueueRuleConfig",
+      "description": "Configurable priority rules and thresholds for queue management",
+      "type": "object",
+      "properties": {
+        "configId": { "type": "string", "maxLength": 50 },
+        "urgentWaitDeductionPercent": { "type": "number" },
+        "moderateWaitDeductionPercent": { "type": "number" },
+        "autoEscalateAfterMinutes": { "type": "number" },
+        "maxPatientsPerCounter": { "type": "number" },
+        "updatedAt": { "type": "string", "maxLength": 50 },
+        "updatedBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["configId", "urgentWaitDeductionPercent", "moderateWaitDeductionPercent"]
+    },
+    "QueueEvent": {
+      "title": "QueueEvent",
+      "description": "Audit event log for queue status changes",
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "maxLength": 128 },
+        "tokenNumber": { "type": "string", "maxLength": 20 },
+        "patientId": { "type": "string", "maxLength": 128 },
+        "department": { "type": "string", "maxLength": 50 },
+        "previousStatus": { "type": "string", "maxLength": 30 },
+        "newStatus": { "type": "string", "maxLength": 30 },
+        "changedBy": { "type": "string", "maxLength": 128 },
+        "reason": { "type": "string", "maxLength": 255 },
+        "timestamp": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["eventId", "tokenNumber", "previousStatus", "newStatus", "changedBy", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "#/entities/User",
+      "description": "User profiles and assigned role"
+    },
+    "/patients/{patientId}": {
+      "schema": "#/entities/PatientToken",
+      "description": "Live queue tokens and patient records"
+    },
+    "/departments/{departmentId}": {
+      "schema": "#/entities/Department",
+      "description": "Hospital department definitions and queue settings"
+    },
+    "/system_config/{configId}": {
+      "schema": "#/entities/QueueRuleConfig",
+      "description": "Administrative queue rules and system priority configurations"
+    },
+    "/queue_events/{eventId}": {
+      "schema": "#/entities/QueueEvent",
+      "description": "Audit log of queue transitions"
+    }
+  }
+}
