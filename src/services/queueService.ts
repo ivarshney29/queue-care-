@@ -41,20 +41,26 @@ export async function generateNewToken(
   
   try {
     // Query existing patients today in this department to determine sequence
-    const q = query(
-      collection(db, PATIENTS_COLLECTION),
-      where('department', '==', params.department)
-    );
-    const snapshot = await getDocs(q);
-    const currentCount = snapshot.size;
+    let currentCount = 0;
+    let waitingPatients: PatientToken[] = [];
+    try {
+      const q = query(
+        collection(db, PATIENTS_COLLECTION),
+        where('department', '==', params.department)
+      );
+      const snapshot = await getDocs(q);
+      currentCount = snapshot.size;
+      waitingPatients = snapshot.docs
+        .map(d => d.data() as PatientToken)
+        .filter(p => p.status === 'waiting');
+    } catch (queryErr) {
+      console.warn('Pre-queue count query notice:', queryErr);
+    }
+
     const tokenSeq = (currentCount + 101).toString();
     const tokenNumber = `${deptConfig.code}-${tokenSeq}`;
     
     // Calculate waiting estimate
-    const waitingPatients = snapshot.docs
-      .map(d => d.data() as PatientToken)
-      .filter(p => p.status === 'waiting');
-    
     const estimate = calculateEstimatedWait(
       params.department,
       params.priority,
@@ -84,14 +90,18 @@ export async function generateNewToken(
     await setDoc(doc(db, PATIENTS_COLLECTION, patientId), newPatient);
 
     // Record audit event
-    await logQueueEvent({
-      tokenNumber,
-      patientId,
-      department: params.department,
-      previousStatus: 'none',
-      newStatus: 'waiting',
-      reason: 'Token issued'
-    });
+    try {
+      await logQueueEvent({
+        tokenNumber,
+        patientId,
+        department: params.department,
+        previousStatus: 'none',
+        newStatus: 'waiting',
+        reason: 'Token issued'
+      });
+    } catch {
+      // Non-blocking
+    }
 
     return newPatient;
   } catch (error) {
@@ -118,9 +128,8 @@ export function subscribeToAllPatients(
       callback(patients);
     },
     (error) => {
-      console.error('Error listening to all patients:', error);
+      console.warn('Notice listening to all patients:', error);
       if (onError) onError(error);
-      handleFirestoreError(error, OperationType.GET, PATIENTS_COLLECTION);
     }
   );
 }

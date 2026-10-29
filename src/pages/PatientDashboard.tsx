@@ -242,7 +242,13 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
       setCardModalToken(newToken);
       setShowCardModal(true);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to generate token';
+      let msg = err instanceof Error ? err.message : 'Failed to generate token';
+      try {
+        const parsed = JSON.parse(msg);
+        if (parsed.error) msg = parsed.error;
+      } catch {
+        // Not JSON formatted
+      }
       onShowToast('Registration Error', msg, 'error');
     } finally {
       setIsSubmittingToken(false);

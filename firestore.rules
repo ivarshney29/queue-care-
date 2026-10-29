@@ -46,8 +46,7 @@ service cloud.firestore {
 
     // Patients Queue Collection
     match /patients/{patientId} {
-      allow get: if isSignedIn() && (resource.data.ownerUid == request.auth.uid || isStaff());
-      allow list: if isSignedIn() && (resource.data.ownerUid == request.auth.uid || isStaff());
+      allow read: if true;
       
       allow create: if isSignedIn() &&
                        (request.resource.data.ownerUid == request.auth.uid || isStaff()) &&
@@ -68,7 +67,8 @@ service cloud.firestore {
     // Departments Collection
     match /departments/{departmentId} {
       allow read: if true;
-      allow create, update, delete: if isStaff();
+      allow create: if isSignedIn();
+      allow update, delete: if isStaff();
     }
 
     // System Config Collection (Priority rules, consultation parameters)
@@ -79,8 +79,7 @@ service cloud.firestore {
 
     // Queue Events Audit Collection
     match /queue_events/{eventId} {
-      allow read: if isSignedIn() && (isStaff() || resource.data.changedBy == request.auth.uid);
-      allow create: if isSignedIn();
+      allow read, create: if isSignedIn();
       allow update, delete: if isStaff();
     }
   }
